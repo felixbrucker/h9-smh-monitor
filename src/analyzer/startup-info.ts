@@ -1,5 +1,5 @@
 import {LogLine, LogTag} from '../types/log-line.js'
-import {combineLatest, filter, map, Observable, share} from 'rxjs'
+import {combineLatest, distinctUntilChanged, filter, map, Observable, share} from 'rxjs'
 
 
 export interface StartupInfo {
@@ -50,6 +50,7 @@ function mapToVersion(logLines$: Observable<LogLine>): Observable<string> {
   return filterStartupKeyValuePairs(logLines$).pipe(
     filter(info => info.key === 'Version'),
     map(info => info.value),
+    distinctUntilChanged(),
   )
 }
 
@@ -57,6 +58,7 @@ function mapToMinerName(logLines$: Observable<LogLine>): Observable<string> {
   return filterStartupKeyValuePairs(logLines$).pipe(
     filter(info => info.key === 'MinerName'),
     map(info => info.value),
+    distinctUntilChanged(),
   )
 }
 
@@ -64,6 +66,7 @@ function mapToPlotPathCount(logLines$: Observable<LogLine>): Observable<number> 
   return filterStartupKeyValuePairs(logLines$).pipe(
     filter(info => info.key === 'Path count'),
     map(info => parseInt(info.value, 10)),
+    distinctUntilChanged(),
   )
 }
 
@@ -79,6 +82,7 @@ function mapToPostRsVersion(logLines$: Observable<LogLine>): Observable<string> 
       return matches[1]
     }),
     filter((version): version is string => version !== undefined),
+    distinctUntilChanged(),
   )
 }
 
@@ -97,6 +101,7 @@ function mapToCpuInfo(logLines$: Observable<LogLine>): Observable<string> {
       return matches[1]
     }),
     filter((cpu): cpu is string => cpu !== undefined),
+    distinctUntilChanged(),
   )
 }
 

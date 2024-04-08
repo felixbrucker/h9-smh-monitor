@@ -17,6 +17,7 @@ interface ClientToServerEvents {}
 interface ServerToClientEvents {
   'startup-info': (startupInfo: StartupInfo) => void
   'plotting-status': (plottingStatus: Record<string, PlottingStatus>) => void
+  'capacity': (capacity: string) => void
 }
 
 export class Api implements Service, Initializable {
@@ -39,6 +40,9 @@ export class Api implements Service, Initializable {
       }),
       this.h9SmhLogMonitor.plottingStatus$.subscribe(plottingStatus => {
         this.sockets.forEach(socket => socket.emit('plotting-status', Object.fromEntries(plottingStatus)))
+      }),
+      this.h9SmhLogMonitor.capacity$.subscribe(capacity => {
+        this.sockets.forEach(socket => socket.emit('capacity', capacity))
       }),
     ]
   }
@@ -64,8 +68,9 @@ export class Api implements Service, Initializable {
     if (this.h9SmhLogMonitor.startupInfo !== undefined) {
       socket.emit('startup-info', this.h9SmhLogMonitor.startupInfo)
     }
-    if (this.h9SmhLogMonitor.plottingStatus !== undefined) {
-      socket.emit('plotting-status', Object.fromEntries(this.h9SmhLogMonitor.plottingStatus))
+    socket.emit('plotting-status', Object.fromEntries(this.h9SmhLogMonitor.plottingStatus))
+    if (this.h9SmhLogMonitor.capacity !== undefined) {
+      socket.emit('capacity', this.h9SmhLogMonitor.capacity)
     }
   }
 }
