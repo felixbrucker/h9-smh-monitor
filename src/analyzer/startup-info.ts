@@ -8,6 +8,7 @@ export interface StartupInfo {
   plotPaths: number
   postRsVersion: string
   cpu: string
+  threadConfig: ThreadConfig
 }
 
 export function detectStartupInfo(logLines$: Observable<LogLine>): Observable<StartupInfo> {
@@ -17,13 +18,15 @@ export function detectStartupInfo(logLines$: Observable<LogLine>): Observable<St
     mapToPlotPathCount(logLines$),
     mapToPostRsVersion(logLines$),
     mapToCpuInfo(logLines$),
+    mapToThreadConfig(logLines$),
   ]).pipe(
-    map(([version, minerName, plotPathCount, postRsVersion, cpuInfo]) => ({
+    map(([version, minerName, plotPathCount, postRsVersion, cpuInfo, threadConfig]) => ({
       version,
       minerName,
       plotPaths: plotPathCount,
       postRsVersion,
       cpu: cpuInfo,
+      threadConfig,
     }))
   )
 }
@@ -94,5 +97,30 @@ function mapToCpuInfo(logLines$: Observable<LogLine>): Observable<string> {
       return matches[1]
     }),
     filter((cpu): cpu is string => cpu !== undefined),
+  )
+}
+
+interface ThreadConfig {
+  nonces: number
+  postThreads: number
+  randomXThreads: number
+}
+
+const threadConfigRegex = /^msg="Thread configuration information" InitPoST=\w+ Nonces=(\d+) PoETServers="[[\w\]]+" PoETThread=\d+ PoSTAffinity=-?\d+ PoSTAffinityStep=1 PoSTCPUIds="[[\w\]]+" PoSTInstance=5 PoSTThread=(\d+) RandomXAffinity=-1 RandomXAffinityStep=1 RandomXThread=(\d+)$/
+function mapToThreadConfig(logLines$: Observable<LogLine>): Observable<ThreadConfig> {
+  return logLines$.pipe(
+    map((logLine): ThreadConfig|undefined => {
+      const matches = logLine.message.match(threadConfigRegex)
+      if (matches === null || matches.length !== 4) {
+        return
+      }
+
+      return {
+        nonces: parseInt(matches[1], 0),
+        postThreads: parseInt(matches[2], 0),
+        randomXThreads: parseInt(matches[3], 0),
+      }
+    }),
+    filter((config): config is ThreadConfig => config !== undefined),
   )
 }
