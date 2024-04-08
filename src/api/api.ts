@@ -50,7 +50,6 @@ export class Api implements Service, Initializable {
 
   public async shutdown() {
     this.httpServer.close()
-    this.sockets.forEach(peer => peer.disconnect())
     this.subscriptions.forEach(subscription => subscription.unsubscribe())
   }
 
