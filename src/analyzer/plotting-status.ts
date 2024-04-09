@@ -4,7 +4,7 @@ import dayjs from 'dayjs'
 import {mapToPlottingProgress, PlottingProgress} from './plotting-progress.js'
 import {mapToPlottingStart, PlottingStartInfo} from './plotting-start.js'
 import {mapToPlottingEnd} from './plotting-end.js'
-
+import {makeLogger} from '../logging/logger.js'
 
 export interface PlottingStatus extends PlottingProgress {
   numUnits: number
@@ -22,6 +22,7 @@ export interface PlottingStatus extends PlottingProgress {
   }
 }
 
+const logger = makeLogger({ name: 'Plotting' })
 export function mapToPlottingStatus(logLines$: Observable<LogLine>): Observable<Map<string, PlottingStatus>> {
   const _startedPlotsByNodeId: Map<string, PlottingStartInfo> = new Map<string, PlottingStartInfo>()
   const startedPlotsUpdateDueToStart$ = mapToPlottingStart(logLines$).pipe(map(plottingStart => {
@@ -39,6 +40,10 @@ export function mapToPlottingStatus(logLines$: Observable<LogLine>): Observable<
 
   const _activePlotsByNodeId: Map<string, PlottingStatus> = new Map<string, PlottingStatus>()
   const activePlotUpdatesDueToCompletion$ = plottingEnd$.pipe(map(plottingEnd => {
+    const activePlot = _activePlotsByNodeId.get(plottingEnd.nodeId)
+    if (activePlot !== undefined) {
+      logger.info(`Finished plot ${activePlot.nodeId} (${activePlot.totalFiles.sizeInGib} GiB), took ${plottingEnd.durationFormatted}`)
+    }
     _activePlotsByNodeId.delete(plottingEnd.nodeId)
 
     return _activePlotsByNodeId
