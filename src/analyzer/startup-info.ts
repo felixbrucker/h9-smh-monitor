@@ -27,7 +27,7 @@ export function detectStartupInfo(logLines$: Observable<LogLine>): Observable<St
       postRsVersion,
       cpu: cpuInfo,
       threadConfig,
-    }))
+    })),
   )
 }
 
@@ -111,7 +111,7 @@ interface ThreadConfig {
   randomXThreads: number
 }
 
-const threadConfigRegex = /^msg="Thread configuration information" InitPoST=\w+ Nonces=(\d+) PoETServers="[[\w\]]+" PoETThread=\d+ PoSTAffinity=-?\d+ PoSTAffinityStep=1 PoSTCPUIds="[[\w\]]+" PoSTInstance=5 PoSTThread=(\d+) RandomXAffinity=-1 RandomXAffinityStep=1 RandomXThread=(\d+)$/
+const threadConfigRegex = /^msg="Thread configuration information" InitPoST=\w+ Nonces=(\d+) PoETServers="[[\w\]]+" PoETThread=\d+ PoSTAffinity=-?\d+ PoSTAffinityStep=\d+ PoSTCPUIds="[[\w\]]+" PoSTInstance=\d+ PoSTThread=(\d+) RandomXAffinity=-?\d+ RandomXAffinityStep=\d+ RandomXThread=(\d+)$/
 function mapToThreadConfig(logLines$: Observable<LogLine>): Observable<ThreadConfig> {
   return logLines$.pipe(
     map((logLine): ThreadConfig|undefined => {
