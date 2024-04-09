@@ -6,7 +6,7 @@ import relativeTime from 'dayjs/plugin/relativeTime.js'
 
 dayjs.extend(relativeTime)
 
-export interface InitProofStart {
+interface InitProofStart {
   startedAt: Date
   nodeId: string
 }
@@ -26,6 +26,29 @@ export function mapToInitProofStart(logLines$: Observable<LogLine>): Observable<
       }
     }),
     filter((info): info is InitProofStart => info !== undefined),
+  )
+}
+
+export interface InitProofReading {
+  startedAt: Date
+  nodeId: string
+}
+
+const initProofReadingRegex = /^msg="Reading POS files: \\"([\w\\/]+)[/|\\]post_(\w+)\\""/
+export function mapToInitProofReading(logLines$: Observable<LogLine>): Observable<InitProofReading> {
+  return logLines$.pipe(
+    map((logLine): InitProofReading|undefined => {
+      const matches = logLine.message.match(initProofReadingRegex)
+      if (matches === null || matches.length !== 3) {
+        return
+      }
+
+      return {
+        nodeId: matches[2],
+        startedAt: logLine.date.toDate(),
+      }
+    }),
+    filter((info): info is InitProofReading => info !== undefined),
   )
 }
 
@@ -52,13 +75,40 @@ export function mapToInitProofEnd(logLines$: Observable<LogLine>): Observable<In
   )
 }
 
+enum ActiveInitProofState {
+  generatingK2Pow = 'generatingK2Pow',
+  readingProofOfSpace = 'readingProofOfSpace',
+}
+
+export interface ActiveInitProof {
+  nodeId: string
+  startedAt: Date
+  state: ActiveInitProofState
+  stateStartedAt: Date
+}
+
 const logger = makeLogger({ name: 'Proving' })
-export function mapToActiveInitProofs(logLines$: Observable<LogLine>): Observable<Map<string, InitProofStart>> {
-  const activeInitProofs: Map<string, InitProofStart> = new Map<string, InitProofStart>()
+export function mapToActiveInitProofs(logLines$: Observable<LogLine>): Observable<Map<string, ActiveInitProof>> {
+  const activeInitProofs: Map<string, ActiveInitProof> = new Map<string, ActiveInitProof>()
 
   const activeInitProofUpdatesDueToAdd$ = mapToInitProofStart(logLines$).pipe(
     map(initProofStart => {
-      activeInitProofs.set(initProofStart.nodeId, initProofStart)
+      activeInitProofs.set(initProofStart.nodeId, {
+        ...initProofStart,
+        state: ActiveInitProofState.generatingK2Pow,
+        stateStartedAt: initProofStart.startedAt,
+      })
+
+      return activeInitProofs
+    })
+  )
+  const activeInitProofUpdatesDueToReading$ = mapToInitProofReading(logLines$).pipe(
+    map(initProofReading => {
+      const activeInitProof = activeInitProofs.get(initProofReading.nodeId)
+      if (activeInitProof !== undefined) {
+        activeInitProof.state = ActiveInitProofState.readingProofOfSpace
+        activeInitProof.stateStartedAt = initProofReading.startedAt
+      }
 
       return activeInitProofs
     })
@@ -76,5 +126,9 @@ export function mapToActiveInitProofs(logLines$: Observable<LogLine>): Observabl
     })
   )
 
-  return merge(activeInitProofUpdatesDueToAdd$, activeInitProofUpdatesDueToDelete$)
+  return merge(
+    activeInitProofUpdatesDueToAdd$,
+    activeInitProofUpdatesDueToReading$,
+    activeInitProofUpdatesDueToDelete$,
+  )
 }

@@ -12,7 +12,7 @@ import {makeAuthMiddleware} from './auth-middleware.js'
 import {StartupInfo} from '../analyzer/startup-info.js'
 import {PlottingStatus} from '../analyzer/plotting-status.js'
 import {PostRoundInfo} from '../analyzer/post-round-info.js'
-import {InitProofStart} from '../analyzer/active-init-proofs.js'
+import {ActiveInitProof} from '../analyzer/active-init-proofs.js'
 
 interface ClientToServerEvents {}
 
@@ -21,7 +21,7 @@ interface ServerToClientEvents {
   'plotting-status': (plottingStatus: Record<string, PlottingStatus>) => void
   'capacity': (capacity: string) => void
   'post-round-info': (postRoundInfo: PostRoundInfo) => void
-  'active-init-proofs': (activeInitProofs: Record<string, InitProofStart>) => void
+  'active-init-proofs': (activeInitProofs: Record<string, ActiveInitProof>) => void
 }
 
 export class Api implements Service, Initializable {
