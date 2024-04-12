@@ -9,7 +9,7 @@ interface PlottingEndInfo {
   durationFormatted: string
 }
 
-const plottingEndRegex = /^msg="Plot completed" CommitmentAtxId=(\w+) ID=(\w+) LabelsPerUnit=(\d+) NumUnits=(\d+) Path=([\w\\/]+)[/|\\]post_\w+ duration=(\w+)$/
+const plottingEndRegex = /^msg="Plot completed" CommitmentAtxId=(\w+) ID=(\w+) LabelsPerUnit=(\d+) NumUnits=(\d+) Path=([\w\\/]+)[/|\\]post_\w+ duration="?([\w:]+)"?$/
 export function mapToPlottingEnd(logLines$: Observable<LogLine>): Observable<PlottingEndInfo> {
   return logLines$.pipe(
     map((logLine): PlottingEndInfo|undefined => {
