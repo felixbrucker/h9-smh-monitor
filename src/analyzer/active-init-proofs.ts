@@ -3,6 +3,7 @@ import {LogLine} from '../types/log-line.js'
 import {makeLogger} from '../logging/logger.js'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime.js'
+import {ActiveProof, ActiveProofState, mapToProofReading} from './active-proof-reading.js'
 
 dayjs.extend(relativeTime)
 
@@ -29,29 +30,6 @@ export function mapToInitProofStart(logLines$: Observable<LogLine>): Observable<
   )
 }
 
-export interface InitProofReading {
-  startedAt: Date
-  nodeId: string
-}
-
-const initProofReadingRegex = /^msg="Reading POS files: \\"([\w\\/]+)[/|\\]post_(\w+)\\""/
-export function mapToInitProofReading(logLines$: Observable<LogLine>): Observable<InitProofReading> {
-  return logLines$.pipe(
-    map((logLine): InitProofReading|undefined => {
-      const matches = logLine.message.match(initProofReadingRegex)
-      if (matches === null || matches.length !== 3) {
-        return
-      }
-
-      return {
-        nodeId: matches[2],
-        startedAt: logLine.date.toDate(),
-      }
-    }),
-    filter((info): info is InitProofReading => info !== undefined),
-  )
-}
-
 interface InitProofEnd {
   endedAt: Date
   nodeId: string
@@ -75,39 +53,27 @@ export function mapToInitProofEnd(logLines$: Observable<LogLine>): Observable<In
   )
 }
 
-enum ActiveInitProofState {
-  generatingK2Pow = 'generatingK2Pow',
-  readingProofOfSpace = 'readingProofOfSpace',
-}
-
-export interface ActiveInitProof {
-  nodeId: string
-  startedAt: Date
-  state: ActiveInitProofState
-  stateStartedAt: Date
-}
-
 const logger = makeLogger({ name: 'Proving' })
-export function mapToActiveInitProofs(logLines$: Observable<LogLine>): Observable<Map<string, ActiveInitProof>> {
-  const activeInitProofs: Map<string, ActiveInitProof> = new Map<string, ActiveInitProof>()
+export function mapToActiveInitProofs(logLines$: Observable<LogLine>): Observable<Map<string, ActiveProof>> {
+  const activeInitProofs: Map<string, ActiveProof> = new Map<string, ActiveProof>()
 
   const activeInitProofUpdatesDueToAdd$ = mapToInitProofStart(logLines$).pipe(
     map(initProofStart => {
       activeInitProofs.set(initProofStart.nodeId, {
         ...initProofStart,
-        state: ActiveInitProofState.generatingK2Pow,
+        state: ActiveProofState.generatingK2Pow,
         stateStartedAt: initProofStart.startedAt,
       })
 
       return activeInitProofs
     })
   )
-  const activeInitProofUpdatesDueToReading$ = mapToInitProofReading(logLines$).pipe(
-    map(initProofReading => {
-      const activeInitProof = activeInitProofs.get(initProofReading.nodeId)
+  const activeInitProofUpdatesDueToReading$ = mapToProofReading(logLines$).pipe(
+    map(proofReading => {
+      const activeInitProof = activeInitProofs.get(proofReading.nodeId)
       if (activeInitProof !== undefined) {
-        activeInitProof.state = ActiveInitProofState.readingProofOfSpace
-        activeInitProof.stateStartedAt = initProofReading.startedAt
+        activeInitProof.state = ActiveProofState.readingProofOfSpace
+        activeInitProof.stateStartedAt = proofReading.startedAt
       }
 
       return activeInitProofs

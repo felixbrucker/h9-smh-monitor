@@ -12,7 +12,7 @@ import {makeAuthMiddleware} from './auth-middleware.js'
 import {StartupInfo} from '../analyzer/startup-info.js'
 import {PlottingStatus} from '../analyzer/plotting-status.js'
 import {RoundInfo} from '../analyzer/round-info.js'
-import {ActiveInitProof} from '../analyzer/active-init-proofs.js'
+import {ActiveProof} from '../analyzer/active-proof-reading.js'
 
 interface ClientToServerEvents {}
 
@@ -21,7 +21,8 @@ interface ServerToClientEvents {
   'plotting-status': (plottingStatus: Record<string, PlottingStatus>) => void
   'capacity': (capacity: string) => void
   'post-round-info': (postRoundInfo: RoundInfo) => void
-  'active-init-proofs': (activeInitProofs: Record<string, ActiveInitProof>) => void
+  'active-init-proofs': (activeInitProofs: Record<string, ActiveProof>) => void
+  'active-proofs': (activeProofs: Record<string, ActiveProof>) => void
 }
 
 export class Api implements Service, Initializable {
@@ -53,6 +54,9 @@ export class Api implements Service, Initializable {
       }),
       this.h9SmhLogMonitor.activeInitProofs$.subscribe(activeInitProofs => {
         this.sockets.forEach(socket => socket.emit('active-init-proofs', Object.fromEntries(activeInitProofs)))
+      }),
+      this.h9SmhLogMonitor.activeProofs$.subscribe(activeProofs => {
+        this.sockets.forEach(socket => socket.emit('active-proofs', Object.fromEntries(activeProofs)))
       }),
     ]
   }
@@ -86,5 +90,6 @@ export class Api implements Service, Initializable {
       socket.emit('post-round-info', this.h9SmhLogMonitor.roundInfo)
     }
     socket.emit('active-init-proofs', Object.fromEntries(this.h9SmhLogMonitor.activeInitProofs))
+    socket.emit('active-proofs', Object.fromEntries(this.h9SmhLogMonitor.activeProofs))
   }
 }
