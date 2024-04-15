@@ -6,7 +6,7 @@ import {Service} from './container/service.js'
 import {Container} from './container/container.js'
 import {Initializable} from './container/initializable.js'
 import {mapToCapacity} from './analyzer/capacity.js'
-import {mapToPostRoundInfo, PostRoundInfo} from './analyzer/post-round-info.js'
+import {mapToRoundInfo, RoundInfo} from './analyzer/round-info.js'
 import {ActiveInitProof, mapToActiveInitProofs} from './analyzer/active-init-proofs.js'
 
 export class H9SmhLogMonitor implements Service, Initializable {
@@ -26,8 +26,8 @@ export class H9SmhLogMonitor implements Service, Initializable {
     return this.capacitySubject.getValue()
   }
 
-  public get postRoundInfo(): PostRoundInfo|undefined {
-    return this.postRoundInfoSubject.getValue()
+  public get roundInfo(): RoundInfo|undefined {
+    return this.roundInfoSubject.getValue()
   }
 
   public get activeInitProofs(): Map<string, ActiveInitProof> {
@@ -38,25 +38,25 @@ export class H9SmhLogMonitor implements Service, Initializable {
   public readonly plottingStatus$: Observable<Map<string, PlottingStatus>>
   public readonly activeInitProofs$: Observable<Map<string, ActiveInitProof>>
   public readonly capacity$: Observable<string>
-  public readonly postRoundInfo$: Observable<PostRoundInfo>
+  public readonly roundInfo$: Observable<RoundInfo>
   private readonly startupInfoSubject: BehaviorSubject<StartupInfo|undefined> = new BehaviorSubject<StartupInfo|undefined>(undefined)
   private readonly plottingStatusSubject: BehaviorSubject<Map<string, PlottingStatus>> = new BehaviorSubject<Map<string, PlottingStatus>>(new Map())
   private readonly capacitySubject: BehaviorSubject<string|undefined> = new BehaviorSubject<string|undefined>(undefined)
-  private readonly postRoundInfoSubject: BehaviorSubject<PostRoundInfo|undefined> = new BehaviorSubject<PostRoundInfo|undefined>(undefined)
+  private readonly roundInfoSubject: BehaviorSubject<RoundInfo|undefined> = new BehaviorSubject<RoundInfo|undefined>(undefined)
   private readonly activeInitProofsSubject: BehaviorSubject<Map<string, ActiveInitProof>> = new BehaviorSubject<Map<string, ActiveInitProof>>(new Map())
   private readonly subscriptions: Subscription[]
 
   private constructor(private readonly logObserver: LogObserver) {
     this.startupInfo$ = this.startupInfoSubject.pipe(filter((startupInfo): startupInfo is StartupInfo => startupInfo !== undefined))
     this.capacity$ = this.capacitySubject.pipe(filter((capacity): capacity is string => capacity !== undefined))
-    this.postRoundInfo$ = this.postRoundInfoSubject.pipe(filter((postRoundInfo): postRoundInfo is PostRoundInfo => postRoundInfo !== undefined))
+    this.roundInfo$ = this.roundInfoSubject.pipe(filter((postRoundInfo): postRoundInfo is RoundInfo => postRoundInfo !== undefined))
     this.plottingStatus$ = this.plottingStatusSubject.asObservable()
     this.activeInitProofs$ = this.activeInitProofsSubject.asObservable()
     this.subscriptions = [
       detectStartupInfo(this.logObserver.logLines).subscribe(this.startupInfoSubject),
       mapToPlottingStatus(this.logObserver.logLines).subscribe(this.plottingStatusSubject),
       mapToCapacity(this.logObserver.logLines).subscribe(this.capacitySubject),
-      mapToPostRoundInfo(this.logObserver.logLines).subscribe(this.postRoundInfoSubject),
+      mapToRoundInfo(this.logObserver.logLines).subscribe(this.roundInfoSubject),
       mapToActiveInitProofs(this.logObserver.logLines).subscribe(this.activeInitProofsSubject),
     ]
   }

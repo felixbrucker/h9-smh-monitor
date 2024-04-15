@@ -11,7 +11,7 @@ import {Server as SocketIoServer, Socket} from 'socket.io'
 import {makeAuthMiddleware} from './auth-middleware.js'
 import {StartupInfo} from '../analyzer/startup-info.js'
 import {PlottingStatus} from '../analyzer/plotting-status.js'
-import {PostRoundInfo} from '../analyzer/post-round-info.js'
+import {RoundInfo} from '../analyzer/round-info.js'
 import {ActiveInitProof} from '../analyzer/active-init-proofs.js'
 
 interface ClientToServerEvents {}
@@ -20,7 +20,7 @@ interface ServerToClientEvents {
   'startup-info': (startupInfo: StartupInfo) => void
   'plotting-status': (plottingStatus: Record<string, PlottingStatus>) => void
   'capacity': (capacity: string) => void
-  'post-round-info': (postRoundInfo: PostRoundInfo) => void
+  'post-round-info': (postRoundInfo: RoundInfo) => void
   'active-init-proofs': (activeInitProofs: Record<string, ActiveInitProof>) => void
 }
 
@@ -48,7 +48,7 @@ export class Api implements Service, Initializable {
       this.h9SmhLogMonitor.capacity$.subscribe(capacity => {
         this.sockets.forEach(socket => socket.emit('capacity', capacity))
       }),
-      this.h9SmhLogMonitor.postRoundInfo$.subscribe(postRoundInfo => {
+      this.h9SmhLogMonitor.roundInfo$.subscribe(postRoundInfo => {
         this.sockets.forEach(socket => socket.emit('post-round-info', postRoundInfo))
       }),
       this.h9SmhLogMonitor.activeInitProofs$.subscribe(activeInitProofs => {
@@ -82,8 +82,8 @@ export class Api implements Service, Initializable {
     if (this.h9SmhLogMonitor.capacity !== undefined) {
       socket.emit('capacity', this.h9SmhLogMonitor.capacity)
     }
-    if (this.h9SmhLogMonitor.postRoundInfo !== undefined) {
-      socket.emit('post-round-info', this.h9SmhLogMonitor.postRoundInfo)
+    if (this.h9SmhLogMonitor.roundInfo !== undefined) {
+      socket.emit('post-round-info', this.h9SmhLogMonitor.roundInfo)
     }
     socket.emit('active-init-proofs', Object.fromEntries(this.h9SmhLogMonitor.activeInitProofs))
   }
