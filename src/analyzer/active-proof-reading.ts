@@ -34,7 +34,7 @@ export interface ProofReading {
   nodeId: string
 }
 
-const proofReadingRegex = /^msg="Reading POS files: \\"([\w\\/:]+)[/|\\]post_(\w+)\\""/
+const proofReadingRegex = /^msg="Reading POS files: \\"(.+)[/|\\]post_(\w+)\\""/
 export function mapToProofReading(logLines$: Observable<LogLine>): Observable<ProofReading> {
   return logLines$.pipe(
     map((logLine): ProofReading|undefined => {
