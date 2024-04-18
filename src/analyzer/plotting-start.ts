@@ -7,7 +7,7 @@ export interface PlottingStartInfo {
   numUnits: number
 }
 
-const plottingStartRegex = /^msg="(?:Start plot|Continue plot)" ID=(\w+) LabelsPerUnit=(\d+) NumUnits=(\d+) Path=([\w\\/]+)[/|\\]post_/
+const plottingStartRegex = /^msg="(?:Start plot|Continue plot)" ID=(\w+) LabelsPerUnit=(\d+) NumUnits=(\d+) Path="?([\w\\/:]+)[/|\\]post_/
 export function mapToPlottingStart(logLines$: Observable<LogLine>): Observable<PlottingStartInfo> {
   return logLines$.pipe(
     map((logLine): PlottingStartInfo|undefined => {

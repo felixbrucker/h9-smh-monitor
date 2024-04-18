@@ -19,7 +19,7 @@ export interface PlottingProgress {
 
 
 
-const plottingProgressRegex = /^Speed:\[([^\]]+)]\s+Progress:\[([\d.]+)%]\s+File:\[(\d+)\/(\d+)]\s+Wait:\[\d+]\s+Path:\[([\w\\/]+)[/|\\]post_(\w+)]$/
+const plottingProgressRegex = /^Speed:\[([^\]]+)]\s+Progress:\[([\d.]+)%]\s+File:\[(\d+)\/(\d+)]\s+Wait:\[\d+]\s+Path:\[([\w\\/:]+)[/|\\]post_(\w+)]$/
 export function mapToPlottingProgress(logLines$: Observable<LogLine>): Observable<PlottingProgress> {
   return logLines$.pipe(
     map((logLine): PlottingProgress|undefined => {
