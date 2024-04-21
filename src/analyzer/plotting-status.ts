@@ -24,9 +24,15 @@ export interface PlottingStatus extends PlottingProgress {
 
 const logger = makeLogger({ name: 'Plotting' })
 export function mapToPlottingStatus(logLines$: Observable<LogLine>): Observable<Map<string, PlottingStatus>> {
+  const _activePlotsByNodeId: Map<string, PlottingStatus> = new Map<string, PlottingStatus>()
   const _startedPlotsByNodeId: Map<string, PlottingStartInfo> = new Map<string, PlottingStartInfo>()
   const startedPlotsUpdateDueToStart$ = mapToPlottingStart(logLines$).pipe(map(plottingStart => {
     _startedPlotsByNodeId.set(plottingStart.nodeId, plottingStart)
+    const activePlot = _activePlotsByNodeId.get(plottingStart.nodeId)
+    if (activePlot !== undefined) {
+      activePlot.numUnits = plottingStart.numUnits
+      activePlot.totalFiles.sizeInGib = plottingStart.numUnits * 64
+    }
 
     return _startedPlotsByNodeId
   }))
@@ -38,7 +44,7 @@ export function mapToPlottingStatus(logLines$: Observable<LogLine>): Observable<
   }))
   const startedPlotsByNodeId$ = merge(startedPlotsUpdateDueToStart$, startedPlotsUpdateDueToEnd$)
 
-  const _activePlotsByNodeId: Map<string, PlottingStatus> = new Map<string, PlottingStatus>()
+
   const activePlotUpdatesDueToCompletion$ = plottingEnd$.pipe(map(plottingEnd => {
     const activePlot = _activePlotsByNodeId.get(plottingEnd.nodeId)
     if (activePlot !== undefined) {
