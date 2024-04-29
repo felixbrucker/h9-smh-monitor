@@ -64,8 +64,13 @@ export interface ScanProgress {
 }
 
 export function mapToScanProgress(logLines$: Observable<LogLine>): Observable<ScanProgress> {
+  const loadedPlots: Map<string, number> = new Map<string, number>()
   const totalPlots$ = mapToLoadingCompleted(logLines$).pipe(
-    scan((acc, curr) => acc + curr.count, 0),
+    map(loadingCompleted => {
+      loadedPlots.set(loadingCompleted.path, loadingCompleted.count)
+
+      return Array.from(loadedPlots.values()).reduce((acc, curr) => acc + curr,0)
+    }),
     distinctUntilChanged(),
   )
   const initialPostSubmit: PostSubmit = { completed: 0, total: 0 }
