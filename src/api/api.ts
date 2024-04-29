@@ -13,6 +13,7 @@ import {StartupInfo} from '../analyzer/startup-info.js'
 import {PlottingStatus} from '../analyzer/plotting-status.js'
 import {RoundInfo} from '../analyzer/round-info.js'
 import {ActiveProof} from '../analyzer/active-proof-reading.js'
+import {ScanProgress} from '../analyzer/scan-progress.js'
 
 interface ClientToServerEvents {}
 
@@ -23,6 +24,7 @@ interface ServerToClientEvents {
   'post-round-info': (postRoundInfo: RoundInfo) => void
   'active-init-proofs': (activeInitProofs: Record<string, ActiveProof>) => void
   'active-proofs': (activeProofs: Record<string, ActiveProof>) => void
+  'scan-progress': (scanProgress: ScanProgress) => void
 }
 
 export class Api implements Service, Initializable {
@@ -58,6 +60,9 @@ export class Api implements Service, Initializable {
       this.h9SmhLogMonitor.activeProofs$.subscribe(activeProofs => {
         this.sockets.forEach(socket => socket.emit('active-proofs', Object.fromEntries(activeProofs)))
       }),
+      this.h9SmhLogMonitor.scanProgress$.subscribe(scanProgress => {
+        this.sockets.forEach(socket => socket.emit('scan-progress', scanProgress))
+      }),
     ]
   }
 
@@ -91,5 +96,6 @@ export class Api implements Service, Initializable {
     }
     socket.emit('active-init-proofs', Object.fromEntries(this.h9SmhLogMonitor.activeInitProofs))
     socket.emit('active-proofs', Object.fromEntries(this.h9SmhLogMonitor.activeProofs))
+    socket.emit('scan-progress', this.h9SmhLogMonitor.scanProgress)
   }
 }

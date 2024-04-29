@@ -9,6 +9,7 @@ import {mapToCapacity} from './analyzer/capacity.js'
 import {mapToRoundInfo, RoundInfo} from './analyzer/round-info.js'
 import {mapToActiveInitProofs} from './analyzer/active-init-proofs.js'
 import {ActiveProof, mapToActiveProofs} from './analyzer/active-proof-reading.js'
+import {mapToScanProgress, ScanProgress} from './analyzer/scan-progress.js'
 
 export class H9SmhLogMonitor implements Service, Initializable {
   public static make(container: Container): H9SmhLogMonitor {
@@ -39,18 +40,24 @@ export class H9SmhLogMonitor implements Service, Initializable {
     return this.activeProofsSubject.getValue()
   }
 
+  public get scanProgress(): ScanProgress {
+    return this.scanProgressSubject.getValue()
+  }
+
   public readonly startupInfo$: Observable<StartupInfo>
   public readonly plottingStatus$: Observable<Map<string, PlottingStatus>>
   public readonly activeInitProofs$: Observable<Map<string, ActiveProof>>
   public readonly activeProofs$: Observable<Map<string, ActiveProof>>
   public readonly capacity$: Observable<string>
   public readonly roundInfo$: Observable<RoundInfo>
+  public readonly scanProgress$: Observable<ScanProgress>
   private readonly startupInfoSubject: BehaviorSubject<StartupInfo|undefined> = new BehaviorSubject<StartupInfo|undefined>(undefined)
   private readonly plottingStatusSubject: BehaviorSubject<Map<string, PlottingStatus>> = new BehaviorSubject<Map<string, PlottingStatus>>(new Map())
   private readonly capacitySubject: BehaviorSubject<string|undefined> = new BehaviorSubject<string|undefined>(undefined)
   private readonly roundInfoSubject: BehaviorSubject<RoundInfo|undefined> = new BehaviorSubject<RoundInfo|undefined>(undefined)
   private readonly activeInitProofsSubject: BehaviorSubject<Map<string, ActiveProof>> = new BehaviorSubject<Map<string, ActiveProof>>(new Map())
   private readonly activeProofsSubject: BehaviorSubject<Map<string, ActiveProof>> = new BehaviorSubject<Map<string, ActiveProof>>(new Map())
+  private readonly scanProgressSubject: BehaviorSubject<ScanProgress> = new BehaviorSubject<ScanProgress>({ completed: 0, total: 0 })
   private readonly subscriptions: Subscription[]
 
   private constructor(private readonly logObserver: LogObserver) {
@@ -60,6 +67,7 @@ export class H9SmhLogMonitor implements Service, Initializable {
     this.plottingStatus$ = this.plottingStatusSubject.asObservable()
     this.activeInitProofs$ = this.activeInitProofsSubject.asObservable()
     this.activeProofs$ = this.activeProofsSubject.asObservable()
+    this.scanProgress$ = this.scanProgressSubject.asObservable()
     this.subscriptions = [
       detectStartupInfo(this.logObserver.logLines).subscribe(this.startupInfoSubject),
       mapToPlottingStatus(this.logObserver.logLines).subscribe(this.plottingStatusSubject),
@@ -67,6 +75,7 @@ export class H9SmhLogMonitor implements Service, Initializable {
       mapToRoundInfo(this.logObserver.logLines).subscribe(this.roundInfoSubject),
       mapToActiveInitProofs(this.logObserver.logLines).subscribe(this.activeInitProofsSubject),
       mapToActiveProofs(this.logObserver.logLines).subscribe(this.activeProofsSubject),
+      mapToScanProgress(this.logObserver.logLines).subscribe(this.scanProgressSubject),
     ]
   }
 
